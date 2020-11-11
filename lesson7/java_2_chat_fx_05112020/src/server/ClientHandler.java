@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Arrays;
 
 public class ClientHandler {
     private Server server;
@@ -30,15 +31,19 @@ public class ClientHandler {
 
                             if (str.startsWith("/auth ")) {
                                 String[] token = str.split("\\s",3);
-                                String newNick = server.getAuthService()
-                                        .getNicknameByLoginAndPassword(token[1], token[2]);
-                                if (newNick != null) {
-                                    nickname = newNick;
-                                    out.writeUTF("/authok "+nickname);
-                                    server.subscribe(this);
-                                    break;
+                                if( !server.isUser( token[1] ) ) {
+                                    String newNick = server.getAuthService()
+                                            .getNicknameByLoginAndPassword(token[1], token[2]);
+                                    if (newNick != null) {
+                                        nickname = newNick;
+                                        out.writeUTF("/authok "+nickname);
+                                        server.subscribe(this);
+                                        break;
+                                    } else {
+                                        out.writeUTF("Неверный логин / пароль");
+                                    }
                                 } else {
-                                    out.writeUTF("Неверный логин / пароль");
+                                    out.writeUTF("Такой пользователь уже в сети");
                                 }
                             }
                         }
@@ -51,9 +56,13 @@ public class ClientHandler {
                         if (str.equals("/end")) {
                             out.writeUTF("/end");
                             break;
+                        } else if (str.startsWith("/w ")) {
+                            String[] privatMess = str.split("\\s",3);
+                            server.privateMessage( this, privatMess[1], privatMess[2] );
+                        } else {
+                            server.broadcastMsg(this, str);
                         }
 
-                        server.broadcastMsg(this, str);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
