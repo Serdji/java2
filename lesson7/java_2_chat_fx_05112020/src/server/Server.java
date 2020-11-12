@@ -1,14 +1,9 @@
 package server;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
-import java.util.Scanner;
-import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Server {
@@ -49,6 +44,27 @@ public class Server {
         for (ClientHandler c : clients) {
             c.sendMsg(message);
         }
+    }
+
+    public void privateMessage(ClientHandler sender, String whomNickname, String msg) {
+        String message = String.format("%s : %s", sender.getNickname(), msg );
+
+        for (ClientHandler c : clients) {
+            if ( c.getNickname().equals( whomNickname ) ) {
+                c.sendMsg( message );
+                return;
+            }
+        }
+        sender.sendMsg( "Пользователь не в сети" );
+    }
+
+    public boolean isUser( String whomNickname ) {
+        for (ClientHandler c : clients) {
+            if ( c.getNickname().equals( whomNickname ) ) {
+                return c.getNickname().equals( whomNickname );
+            }
+        }
+        return false;
     }
 
     public void subscribe(ClientHandler clientHandler){
